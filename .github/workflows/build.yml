@@ -1,7 +1,5 @@
 name: main
-on:
-  push:
-    branches: master
+on: ['push']
 
 jobs:
   main:
@@ -38,6 +36,7 @@ jobs:
           docker buildx build \
             --platform linux/amd64,linux/arm64,linux/arm/v7 \
             --tag raspbernetes/custom-error-pages:latest \
+            --tag raspbernetes/custom-error-pages:v1.0.0 \
             -f Dockerfile \
             --push \
             .
