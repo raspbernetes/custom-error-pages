@@ -55,18 +55,18 @@ const (
 	// RequestId is a unique ID that identifies the request - same as for backend service
 	RequestId = "X-Request-ID"
 
-	// ErrFilesPathVar is the name of the environment variable indicating
+	// filesPathVar is the name of the environment variable indicating
 	// the location on disk of files served by the handler.
-	ErrFilesPathVar = "ERROR_FILES_PATH"
+	filesPathVar = "ERROR_FILES_PATH"
 )
 
 func main() {
-	errFilesPath := "./pages"
-	if os.Getenv(ErrFilesPathVar) != "" {
-		errFilesPath = os.Getenv(ErrFilesPathVar)
+	filesPath := "./pages"
+	if os.Getenv(filesPathVar) != "" {
+		filesPath = os.Getenv(filesPathVar)
 	}
 
-	http.HandleFunc("/", errorHandler(errFilesPath))
+	http.HandleFunc("/", errorHandler(filesPath))
 
 	http.Handle("/metrics", promhttp.Handler())
 
@@ -74,7 +74,28 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 	})
 
+	http.HandleFunc("/status", successHandler(filesPath))
+
 	http.ListenAndServe(fmt.Sprintf(":8080"), nil)
+}
+
+func successHandler(path string) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		code := 200
+		w.WriteHeader(code)
+
+		scode := strconv.Itoa(code)
+		file := fmt.Sprintf("%v/%cxx%v", path, scode[0], ".html")
+		f, err := os.Open(file)
+		if err != nil {
+			log.Printf("Unexpected error opening file: %v", err)
+			http.NotFound(w, r)
+			return
+		}
+		defer f.Close()
+		io.Copy(w, f)
+	}
 }
 
 func errorHandler(path string) func(http.ResponseWriter, *http.Request) {
