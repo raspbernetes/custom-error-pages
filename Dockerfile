@@ -26,4 +26,4 @@ COPY --from=build /go/src/github.com/raspbernetes/custom-error-pages .
 
 USER nonroot:nonroot
 
-ENTRYPOINT ["custom-error-pages"]
+ENTRYPOINT ["/custom-error-pages"]
